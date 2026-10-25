@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.build/
+dist/
+*.log
+*.sock
+*.h264
+*.i420
+*.mp4
+*.mkv
+*.ts
+*.bin
+*.packets
+*-test-report.json
+packet-headers.json
+.venv/

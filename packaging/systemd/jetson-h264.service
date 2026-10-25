@@ -1,0 +1,19 @@
+[Unit]
+Description=Jetson H.264 hardware encoder socket service
+After=local-fs.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/jetson-h264.conf
+RuntimeDirectory=jetson-h264
+RuntimeDirectoryMode=0755
+CacheDirectory=jetson-h264
+Environment=GST_REGISTRY=/var/cache/jetson-h264/gst-registry.bin
+ExecStart=/usr/bin/python3 ${ENCODER_SCRIPT} --socket /run/jetson-h264/encoder.sock --socket-gid ${PLEX_GID} --sessions 0
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=10
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

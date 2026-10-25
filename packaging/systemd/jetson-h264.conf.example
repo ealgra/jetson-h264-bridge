@@ -1,0 +1,3 @@
+# Copy to /etc/jetson-h264.conf and set these for your installation.
+ENCODER_SCRIPT=/opt/jetson-h264/src/service/encoder_service.py
+PLEX_GID=100
