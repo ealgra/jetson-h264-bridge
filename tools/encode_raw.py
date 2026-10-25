@@ -67,7 +67,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--socket', required=True, help='encoder service Unix socket')
     parser.add_argument('--input', required=True, help='packed I420 raw video file')
-    parser.add_argument('--output', required=True, help='Annex B H.264 output file')
+    parser.add_argument('--output', required=True, help='Annex B output file')
+    parser.add_argument('--codec', choices=('h264', 'h265'), default='h264')
     parser.add_argument('--width', type=int, required=True)
     parser.add_argument('--height', type=int, required=True)
     parser.add_argument('--fps', type=int, default=30)
@@ -79,7 +80,8 @@ def main():
             or not 1 <= args.fps <= 120 or args.bitrate < 10000
             or args.gop < 1):
         parser.error('Unsupported dimensions, frame rate, bitrate or GOP')
-    request = Init(codec_id=0, width=args.width, height=args.height, pix_fmt=0,
+    request = Init(codec_id=0 if args.codec == 'h264' else 1,
+                   width=args.width, height=args.height, pix_fmt=0,
                    bit_rate=args.bitrate, gop_size=args.gop,
                    framerate_num=args.fps, framerate_den=1,
                    timebase_num=1, timebase_den=args.fps,
@@ -107,7 +109,7 @@ def main():
             send(conn, 3)
             packets += drain(conn, output)
         send(conn, 4)
-    print('encoded {} frames into {} H.264 packets'.format(frames, packets), file=sys.stderr)
+    print('encoded {} frames into {} {} packets'.format(frames, packets, args.codec), file=sys.stderr)
 
 
 if __name__ == '__main__':

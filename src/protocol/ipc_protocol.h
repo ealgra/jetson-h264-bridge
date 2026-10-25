@@ -1,4 +1,4 @@
-/* Encoding-only wire format adapted from tpmullan/plex-nvenc-rpc.
+/* Local codec wire format adapted from tpmullan/plex-nvenc-rpc.
  * GPL-2.0; see NOTICE.md and LICENSE.
  *
  * A local AF_UNIX SOCK_STREAM connection carries messages framed as:
@@ -23,9 +23,16 @@ enum {
     IPC_MSG_PACKET     = 7,
     IPC_MSG_FRAME_DONE = 8,
     IPC_MSG_ERR        = 9,
+    IPC_MSG_DEC_INIT   = 10,
+    IPC_MSG_DEC_PACKET = 11,
+    IPC_MSG_DEC_INIT_OK = 12,
+    IPC_MSG_DEC_INIT_ERR = 13,
+    IPC_MSG_DEC_FRAME = 14,
+    IPC_MSG_DEC_DONE = 15,
 };
 
-/* codec_id=0 means H.264 encode; pix_fmt=0 means FFmpeg AV_PIX_FMT_YUV420P.
+/* codec_id=0 means H.264 encode, 1 means H.265 encode.
+ * pix_fmt=0 means FFmpeg AV_PIX_FMT_YUV420P.
  * crf<0 means unset. The service currently uses bit_rate, or max_rate when
  * Plex supplies CRF+maxrate. preset_len and x264opts_len are reserved and
  * must both be zero in this implementation. */
@@ -51,15 +58,38 @@ struct ipc_init_req {
 /* FRAME: this header then tightly packed width*height*3/2 I420 bytes. */
 struct ipc_frame_hdr { int64_t pts; };
 
-/* INIT_OK: this header then H.264 SPS/PPS extradata. */
+/* INIT_OK: this header then H.264 SPS/PPS or H.265 VPS/SPS/PPS. */
 struct ipc_init_ok { uint32_t extradata_size; };
 
-/* PACKET: this header then encoded H.264 access-unit bytes. */
+/* PACKET: this header then encoded H.264 or H.265 access-unit bytes. */
 struct ipc_packet_hdr {
     int64_t pts;
     int64_t dts;
     uint32_t size;
     uint32_t flags;
 };
+
+/* DEC_INIT: codec_id=0 H.264, 1 H.265. Extradata follows this header,
+ * including AVCDecoderConfigurationRecord or HEVCDecoderConfigurationRecord
+ * when supplied by the demuxer. Packet/frame PTS use the given timebase. */
+struct ipc_dec_init_req {
+    uint32_t codec_id;
+    uint32_t extradata_size;
+    uint32_t timebase_num;
+    uint32_t timebase_den;
+};
+
+/* DEC_PACKET: this header followed by compressed packet bytes. size=0 drains. */
+struct __attribute__((packed)) ipc_dec_packet_hdr { int64_t pts; uint32_t size; };
+
+/* DEC_FRAME: this header followed by tightly packed 8-bit I420 planes. */
+struct ipc_dec_frame_hdr {
+    int64_t pts;
+    uint32_t width;
+    uint32_t height;
+};
+_Static_assert(sizeof(struct ipc_dec_init_req) == 16, "DEC_INIT wire size");
+_Static_assert(sizeof(struct ipc_dec_packet_hdr) == 12, "DEC_PACKET wire size");
+_Static_assert(sizeof(struct ipc_dec_frame_hdr) == 16, "DEC_FRAME wire size");
 
 #endif

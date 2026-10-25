@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only Jetson encoder and optional Plex codec compatibility checks."""
+"""Read-only Jetson codec and optional Plex compatibility checks."""
 import argparse
 import os
 import platform
@@ -33,7 +33,8 @@ def main():
         env = os.environ.copy()
         if args.gst_registry:
             env['GST_REGISTRY'] = args.gst_registry
-        for element in ('nvvidconv', 'nvv4l2h264enc', 'h264parse'):
+        for element in ('nvvidconv', 'nvv4l2h264enc', 'nvv4l2h265enc',
+                        'nvv4l2decoder', 'h264parse', 'h265parse'):
             result = subprocess.run([inspector, element], stdout=subprocess.DEVNULL,
                                     stderr=subprocess.PIPE, env=env)
             check(element, result.returncode == 0,
